@@ -29,6 +29,13 @@ sub-checker.duckdns.org {
 
     # 나머지는 프론트엔드로
     handle {
-        reverse_proxy frontend:80
+        reverse_proxy frontend:80 {
+            # Google OAuth 팝업을 위한 COOP 헤더 설정
+            header {
+                # Google OAuth 팝업이 postMessage를 사용할 수 있도록 설정
+                Cross-Origin-Opener-Policy "same-origin-allow-popups"
+                Cross-Origin-Embedder-Policy "unsafe-none"
+            }
+        }
     }
 }
