@@ -1,0 +1,11 @@
+sub-checker.duckdns.org {
+    # API 요청은 백엔드로 (경로 유지)
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
+
+    # 나머지는 프론트엔드로
+    handle {
+        reverse_proxy frontend:80
+    }
+}
