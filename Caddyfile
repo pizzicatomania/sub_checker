@@ -1,7 +1,30 @@
+{
+    # 글로벌 설정: 인증서 만료 알림 등을 받을 이메일
+    email pizzicatomania1988@gmail.com
+}
+
 sub-checker.duckdns.org {
+
+    tls {
+        issuer acme {
+            dir https://acme.zerossl.com/v2/DV90
+        }
+    }
+
     # API 요청은 백엔드로 (경로 유지)
     handle /api/* {
-        reverse_proxy backend:8000
+        reverse_proxy backend:8000 {
+            # 헤더 전달 설정
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+            # 타임아웃 설정
+            transport http {
+                dial_timeout 10s
+                response_header_timeout 30s
+            }
+        }
     }
 
     # 나머지는 프론트엔드로
