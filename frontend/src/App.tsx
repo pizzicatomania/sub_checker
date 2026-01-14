@@ -59,7 +59,7 @@ function App() {
 
   const handleExport = async () => {
     if (subtitles.length === 0) return;
-    const format = fileName.endsWith('.smi') ? 'smi' : 'srt'; // Simple deduction
+    const format = fileName.endsWith('.smi') ? 'smi' : (fileName.endsWith('.txt') ? 'txt' : 'srt');
     try {
       const content = await exportFile(subtitles, format);
       const blob = new Blob([content], { type: 'text/plain' });
@@ -106,7 +106,7 @@ function App() {
           <label className="flex items-center gap-2 cursor-pointer bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded text-sm transition font-medium">
             <Upload size={16} />
             Import
-            <input type="file" className="hidden" onChange={handleFileUpload} accept=".srt,.smi" />
+            <input type="file" className="hidden" onChange={handleFileUpload} accept=".srt,.smi,.txt" />
           </label>
           <button
             onClick={handleExport}

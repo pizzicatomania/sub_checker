@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
 from app.models import SubtitleItem, Rule, AnalyzeResponse, AnalyzeRequest
 from app.parsers.srt_parser import SRTParser
+from app.parsers.netflix_parser import NetflixTextParser
 from app.checker import Checker
 import io
 
@@ -19,8 +20,8 @@ app.add_middleware(
 
 # Registry of parsers
 PARSERS = {
-    'srt': SRTParser()
-    # 'smi': SMIParser() # To be implemented
+    'srt': SRTParser(),
+    'txt': NetflixTextParser()
 }
 
 @app.post("/api/parse", response_model=List[SubtitleItem])
