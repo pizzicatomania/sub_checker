@@ -4,7 +4,7 @@ from ..models import SubtitleItem
 from .base import BaseParser
 
 class NetflixTextParser(BaseParser):
-    def parse(self, content: bytes) -> List[SubtitleItem]:
+    def parse(self, content: bytes, filename: str = "") -> List[SubtitleItem]:
         try:
             text = content.decode('utf-8')
         except UnicodeDecodeError:

@@ -4,7 +4,7 @@ A web-based tool for validating and correcting subtitle files (SRT) based on cus
 
 ## Features
 
-- **File Upload**: Support for `.srt` subtitle files (with automatic encoding detection).
+- **File Upload**: Support for `.srt` and `.txt` (Netflix custom format) subtitle files with automatic encoding detection.
 - **Custom Rules**: Define regex-based rules with pattern matching and optional replacement suggestions.
 - **Analysis Engine**: highlights matched errors directly in the subtitle text.
 - **3-Column Editor**:
@@ -14,7 +14,7 @@ A web-based tool for validating and correcting subtitle files (SRT) based on cus
 - **Smart Highlighting**: Highlights persist in the "Text" column even after corrections are accepted, preserving context.
 - **Row Shading**: Visual indicators (orange background) for rows with errors.
 - **Browser Persistence**: Rules are saved locally in the browser.
-- **Export**: Download the corrected subtitles as a valid `.srt` file.
+- **Export**: Download the corrected subtitles in the original format (`.srt` or `.txt`).
 
 ## Tech Stack
 
