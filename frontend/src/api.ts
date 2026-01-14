@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+// In production, use relative path (Caddy proxies /api/* to backend)
+// In development, use absolute path to localhost
+const API_URL = import.meta.env.PROD 
+    ? '/api' 
+    : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api');
 
 // Token management
 let authToken: string | null = null;
