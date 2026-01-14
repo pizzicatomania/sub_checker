@@ -5,7 +5,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # 3. 라이브러리 설치 파일 복사 및 설치
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 4. 소스 코드 전체 복사
