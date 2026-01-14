@@ -1,6 +1,11 @@
 # 1단계: 빌드 (Node 사용)
 FROM node:20 AS build-stage
 WORKDIR /app
+
+# 빌드 인자로 환경변수 받기
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 COPY package*.json ./
 RUN npm install
 COPY . .

@@ -4,9 +4,14 @@ services:
     restart: always
     ports:
       - "8000:8000"
+    environment:
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     restart: always
     ports:
       - "80:80"
