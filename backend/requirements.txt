@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+python-multipart
+pysrt
+# chardet is useful for encoding detection if needed
+chardet
