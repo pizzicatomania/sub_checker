@@ -18,6 +18,7 @@ dist/
 backend/venv/
 backend/.pytest_cache/
 backend/test.srt
+backend/data/
 
 # Frontend specific
 frontend/dist/

@@ -1,9 +1,14 @@
+import os
 from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 
-DATABASE_URL = "sqlite:///./sub_checker.db"
+# 데이터베이스 디렉토리 생성 (볼륨 마운트용)
+DB_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
+os.makedirs(DB_DIR, exist_ok=True)
+
+DATABASE_URL = f"sqlite:///{os.path.join(DB_DIR, 'sub_checker.db')}"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

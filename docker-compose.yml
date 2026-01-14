@@ -6,6 +6,9 @@ services:
       - "8000"
     environment:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    volumes:
+      # 데이터베이스 파일을 호스트에 영구 저장
+      - ./backend/data:/app/data
 
   frontend:
     build:
