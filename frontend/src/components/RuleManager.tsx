@@ -14,17 +14,16 @@ export const RuleManager: React.FC<Props> = ({ rules, onRulesChange }) => {
     const addRule = () => {
         if (!newPattern.trim()) return;
         const rule: Rule = {
-            id: Date.now().toString(), // Simple ID generation
             pattern: newPattern,
-            suggestion: newSuggestion,
-            case_sensitive: false
+            suggestion: newSuggestion || undefined
         };
         onRulesChange([...rules, rule]);
         setNewPattern('');
         setNewSuggestion('');
     };
 
-    const deleteRule = (id: string) => {
+    const handleDeleteRule = (id: number | undefined) => {
+        if (id === undefined) return;
         onRulesChange(rules.filter(r => r.id !== id));
     };
 
@@ -71,7 +70,7 @@ export const RuleManager: React.FC<Props> = ({ rules, onRulesChange }) => {
                             )}
                         </div>
                         <button
-                            onClick={() => deleteRule(rule.id)}
+                            onClick={() => handleDeleteRule(rule.id)}
                             className="text-gray-400 hover:text-red-500"
                         >
                             <Trash2 size={16} />

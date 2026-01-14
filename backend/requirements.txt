@@ -4,3 +4,7 @@ python-multipart
 pysrt
 # chardet is useful for encoding detection if needed
 chardet
+google-auth==2.27.0
+google-auth-oauthlib==1.2.0
+sqlalchemy==2.0.25
+python-jose==3.3.0

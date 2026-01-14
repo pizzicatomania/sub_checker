@@ -22,3 +22,6 @@ backend/test.srt
 # Frontend specific
 frontend/dist/
 frontend/.env.local
+client_secret_*.json
+*.env
+*.db

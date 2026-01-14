@@ -1,26 +1,89 @@
 import React, { useState, useEffect } from 'react';
-import { uploadFile, analyzeSubtitles, exportFile } from './api';
-import type { SubtitleItem, Rule, AnalysisResult } from './api';
+import { GoogleLogin } from '@react-oauth/google';
+import type { CredentialResponse } from '@react-oauth/google';
+import { uploadFile, analyzeSubtitles, exportFile, googleLogin, fetchRules, createRule, deleteRule, setAuthToken } from './api';
+import type { SubtitleItem, Rule, AnalysisResult, User } from './api';
 import { RuleManager } from './components/RuleManager';
 import { SubtitleEditor } from './components/SubtitleEditor';
-import { Upload, Download, Play, FileText, CheckCircle } from 'lucide-react';
+import { Upload, Download, Play, FileText, CheckCircle, LogOut, User as UserIcon } from 'lucide-react';
 
 function App() {
+  const [user, setUser] = useState<User | null>(null);
   const [subtitles, setSubtitles] = useState<SubtitleItem[]>([]);
-  // Snapshot of subtitles when analysis was last run, used for the "Text" column
   const [analyzedSubtitles, setAnalyzedSubtitles] = useState<SubtitleItem[]>([]);
-  const [rules, setRules] = useState<Rule[]>(() => {
-    const saved = localStorage.getItem('sub_checker_rules');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [rules, setRules] = useState<Rule[]>([]);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  // Load rules when user logs in
   useEffect(() => {
-    localStorage.setItem('sub_checker_rules', JSON.stringify(rules));
-  }, [rules]);
+    if (user) {
+      loadRules();
+    } else {
+      setRules([]);
+    }
+  }, [user]);
+
+  const loadRules = async () => {
+    try {
+      const serverRules = await fetchRules();
+      setRules(serverRules);
+    } catch (err) {
+      console.error('Failed to load rules:', err);
+    }
+  };
+
+  const handleGoogleSuccess = async (response: CredentialResponse) => {
+    if (!response.credential) return;
+
+    try {
+      setAuthToken(response.credential);
+      const userData = await googleLogin(response.credential);
+      setUser(userData);
+    } catch (err) {
+      console.error('Login failed:', err);
+      alert('Login failed');
+    }
+  };
+
+  const handleLogout = () => {
+    setAuthToken(null);
+    setUser(null);
+    setRules([]);
+  };
+
+  const handleRulesChange = async (newRules: Rule[]) => {
+    // Find added/removed rules
+    const newIds = new Set(newRules.map(r => r.id));
+
+    // Handle deletions
+    for (const rule of rules) {
+      if (rule.id && !newIds.has(rule.id)) {
+        try {
+          await deleteRule(rule.id);
+        } catch (err) {
+          console.error('Failed to delete rule:', err);
+        }
+      }
+    }
+
+    // Handle additions (rules without id)
+    for (const rule of newRules) {
+      if (!rule.id) {
+        try {
+          const created = await createRule({ pattern: rule.pattern, suggestion: rule.suggestion });
+          rule.id = created.id;
+        } catch (err) {
+          console.error('Failed to create rule:', err);
+        }
+      }
+    }
+
+    setRules(newRules.filter(r => r.id));
+    loadRules(); // Refresh from server
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,7 +93,6 @@ function App() {
     try {
       const data = await uploadFile(file);
       setSubtitles(data);
-      // Reset analysis state on new file
       setAnalyzedSubtitles([]);
       setAnalysisResults([]);
       setFileName(file.name);
@@ -46,7 +108,6 @@ function App() {
     if (subtitles.length === 0) return;
     setLoading(true);
     try {
-      // Snapshot the current state of subtitles for correct highlighting mapping
       setAnalyzedSubtitles(JSON.parse(JSON.stringify(subtitles)));
       const results = await analyzeSubtitles(subtitles, rules);
       setAnalysisResults(results);
@@ -75,10 +136,32 @@ function App() {
 
   const updateSubtitle = (index: number, newText: string) => {
     setSubtitles(prev => prev.map(item => item.index === index ? { ...item, text: newText } : item));
-    // Optionally clear analysis for this item or re-run locally?
-    // User requested to KEEP highlights, so we do NOT clear matches for this item.
-    // setAnalysisResults(prev => prev.filter(r => r.item_index !== index));
   };
+
+  // If not logged in, show login screen
+  if (!user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-slate-900 to-slate-700">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <CheckCircle className="text-green-500" size={48} />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Sub Checker</h1>
+            <p className="text-gray-500">Sign in to manage your subtitle rules</p>
+          </div>
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => alert('Login failed')}
+              theme="outline"
+              size="large"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden">
@@ -90,7 +173,6 @@ function App() {
             className="hover:bg-slate-700 p-1 rounded"
             title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
           >
-            {/* Simple Hamburger / Panel Icon */}
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
               <path d="M9 3v18" />
@@ -116,6 +198,22 @@ function App() {
             <Download size={16} />
             Export
           </button>
+          {/* User info */}
+          <div className="flex items-center gap-2 ml-4 pl-4 border-l border-slate-600">
+            {user.picture ? (
+              <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full" />
+            ) : (
+              <UserIcon size={20} />
+            )}
+            <span className="text-sm">{user.name}</span>
+            <button
+              onClick={handleLogout}
+              className="ml-2 p-1 hover:bg-slate-700 rounded"
+              title="Logout"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -124,8 +222,7 @@ function App() {
         {/* Sidebar */}
         <div className={`${isSidebarOpen ? 'w-80' : 'w-0 opacity-0 overflow-hidden'} transition-all duration-300 ease-in-out border-r bg-gray-50 border-gray-200 flex flex-col shrink-0`}>
           <div className="p-4 flex flex-col h-full w-80">
-            {/* Wrap content in fixed width container to prevent squash during transition */}
-            <RuleManager rules={rules} onRulesChange={setRules} />
+            <RuleManager rules={rules} onRulesChange={handleRulesChange} />
             <div className="mt-4">
               <button
                 onClick={runAnalysis}
@@ -150,7 +247,7 @@ function App() {
             <div className="h-full flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 rounded-lg">
               <FileText size={64} className="mb-4 text-gray-300" />
               <p className="text-lg">No file loaded</p>
-              <p className="text-sm">Upload an subtitle file to start editing</p>
+              <p className="text-sm">Upload a subtitle file to start editing</p>
             </div>
           )}
 
